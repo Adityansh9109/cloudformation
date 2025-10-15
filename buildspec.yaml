@@ -8,14 +8,14 @@ env:
 phases:
   install:
     commands:
-      - echo "Installing AWS CLI and jq..."
-      - pip install --upgrade awscli jq
+      - echo "Installing jq..."
+      - yum install -y jq   # AWS CLI v2 is already installed in CodeBuild image
 
   pre_build:
     commands:
       - echo "Pre-build phase"
       - ls -la
-      # Fetch GitHub token from Secrets Manager (if you need it for additional stacks)
+      # Fetch GitHub token from Secrets Manager if needed for additional stacks
       - export GITHUB_TOKEN=$(aws secretsmanager get-secret-value --secret-id myapp/github-token --query SecretString --output text | jq -r .GITHUB_TOKEN)
 
   build:
