@@ -2,7 +2,7 @@ version: 0.2
 env:
   variables:
     APP_STACK_NAME: MyApplicationStack
-    APP_TEMPLATE_FILE: app-template.yml
+    APP_TEMPLATE_FILE: template.yml
 phases:
   install:
     commands:
