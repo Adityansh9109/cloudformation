@@ -7,7 +7,6 @@ Parameters:
     NoEcho: true
     Description: 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
 
-
 Resources:
   # S3 Bucket for artifacts
   ArtifactBucket:
