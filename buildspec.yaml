@@ -19,7 +19,7 @@ phases:
   build:
     commands:
       - echo "Deploying CloudFormation stack"
-      - aws cloudformation deploy --template-file template.yaml --stack-name MyCodePipelineStack --capabilities CAPABILITY_NAMED_IAM --no-fail-on-empty-changeset
+      - aws cloudformation deploy --template-file template.yml --stack-name MyCodePipelineStack --capabilities CAPABILITY_NAMED_IAM --no-fail-on-empty-changeset
   
   post_build:
     commands:
