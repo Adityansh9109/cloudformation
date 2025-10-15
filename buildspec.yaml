@@ -18,8 +18,7 @@ phases:
   build:
     commands:
       - echo "Deploying CloudFormation stack..."
-      - |
-        aws cloudformation deploy \
+      - aws cloudformation deploy \
           --template-file $TEMPLATE_FILE \
           --stack-name $STACK_NAME \
           --capabilities CAPABILITY_NAMED_IAM \
@@ -28,8 +27,7 @@ phases:
   post_build:
     commands:
       - echo "Deployment complete!"
-      - |
-        aws cloudformation describe-stacks \
+      - aws cloudformation describe-stacks \
           --stack-name $STACK_NAME \
           --query "Stacks[0].StackStatus" \
           --output text
