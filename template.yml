@@ -5,7 +5,7 @@ Parameters:
   GitHubToken:
     Type: String
     NoEcho: true
-    Description: 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
+    Description: "myapp/github-token"
 
 Resources:
   # S3 Bucket for artifacts
