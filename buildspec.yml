@@ -1,0 +1,32 @@
+version: 0.2
+
+env:
+  variables:
+    STACK_NAME: MyCodePipelineStack    # 👈 name for the CloudFormation stack
+    TEMPLATE_FILE: template.yaml       # 👈 your CloudFormation file name
+
+phases:
+  install:
+    commands:
+      - echo "🔧 Installing AWS CLI..."
+      - pip install --upgrade awscli
+  pre_build:
+    commands:
+      - echo "🔍 Validating CloudFormation template..."
+      - aws cloudformation validate-template --template-body file://$TEMPLATE_FILE
+  build:
+    commands:
+      - echo "🚀 Deploying CloudFormation stack: $STACK_NAME"
+      - aws cloudformation deploy \
+          --template-file $TEMPLATE_FILE \
+          --stack-name $STACK_NAME \
+          --capabilities CAPABILITY_NAMED_IAM \
+          --no-fail-on-empty-changeset
+  post_build:
+    commands:
+      - echo "✅ Deployment complete!"
+      - aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].StackStatus" --output text
+
+artifacts:
+  files:
+    - '**/*'
