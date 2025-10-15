@@ -1,30 +1,58 @@
 version: 0.2
-
 env:
   variables:
     STACK_NAME: MyCodePipelineStack
     TEMPLATE_FILE: template.yml
-
 phases:
   install:
     commands:
       - echo "Using built-in AWS CLI v2"
-
   pre_build:
     commands:
       - echo "Pre-build phase"
       - ls -la
-
+      # Check stack status and handle REVIEW_IN_PROGRESS state
+      - |
+        echo "Checking stack status..."
+        STACK_STATUS=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+        echo "Current stack status: $STACK_STATUS"
+        
+        if [ "$STACK_STATUS" = "REVIEW_IN_PROGRESS" ]; then
+          echo "Stack is stuck in REVIEW_IN_PROGRESS state. Deleting stack..."
+          aws cloudformation delete-stack --stack-name $STACK_NAME
+          echo "Waiting for stack deletion to complete..."
+          aws cloudformation wait stack-delete-complete --stack-name $STACK_NAME
+          echo "Stack deleted successfully"
+        elif [ "$STACK_STATUS" = "ROLLBACK_COMPLETE" ] || [ "$STACK_STATUS" = "CREATE_FAILED" ]; then
+          echo "Stack is in a failed state ($STACK_STATUS). Deleting stack..."
+          aws cloudformation delete-stack --stack-name $STACK_NAME
+          echo "Waiting for stack deletion to complete..."
+          aws cloudformation wait stack-delete-complete --stack-name $STACK_NAME
+          echo "Stack deleted successfully"
+        fi
   build:
     commands:
       - echo "Deploying CloudFormation stack..."
-      - aws cloudformation deploy --template-file $TEMPLATE_FILE --stack-name $STACK_NAME --capabilities CAPABILITY_NAMED_IAM --no-fail-on-empty-changeset --debug
-
+      - |
+        aws cloudformation deploy \
+          --template-file $TEMPLATE_FILE \
+          --stack-name $STACK_NAME \
+          --capabilities CAPABILITY_NAMED_IAM \
+          --no-fail-on-empty-changeset
   post_build:
     commands:
       - echo "Deployment complete!"
-      - aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].StackStatus" --output text
-
+      - |
+        FINAL_STATUS=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "UNKNOWN")
+        echo "Final stack status: $FINAL_STATUS"
+        
+        if [[ "$FINAL_STATUS" == *"COMPLETE"* ]] && [[ "$FINAL_STATUS" != *"ROLLBACK"* ]]; then
+          echo "✓ Stack deployment successful"
+          exit 0
+        else
+          echo "✗ Stack deployment failed or rolled back"
+          exit 1
+        fi
 artifacts:
   files:
     - '**/*'
