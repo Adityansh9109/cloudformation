@@ -5,7 +5,7 @@ Parameters:
   GitHubToken:
     Type: String
     NoEcho: true
-    Description: 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
+    Description: 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
 
 Resources:
   # S3 Bucket for artifacts
