@@ -8,32 +8,33 @@ env:
 phases:
   install:
     commands:
-       - echo "Using built-in AWS CLI v2"
+      - echo "Using built-in AWS CLI v2"
+
   pre_build:
     commands:
       - echo "Pre-build phase"
       - ls -la
-      # Fetch GitHub token from Secrets Manager if needed for additional stacks
-      - export GITHUB_TOKEN=$(aws secretsmanager get-secret-value --secret-id myapp/github-token --query SecretString --output text | jq -r .GITHUB_TOKEN)
+      # Fetch GitHub token from Secrets Manager without jq
+      - export GITHUB_TOKEN=$(aws secretsmanager get-secret-value --secret-id myapp/github-token --query SecretString --output text | python3 -c "import sys, json; print(json.load(sys.stdin)['GITHUB_TOKEN'])")
 
   build:
     commands:
       - echo "Deploying CloudFormation stack..."
-      - >
+      - |
         aws cloudformation deploy \
-        --template-file $TEMPLATE_FILE \
-        --stack-name $STACK_NAME \
-        --capabilities CAPABILITY_NAMED_IAM \
-        --no-fail-on-empty-changeset
+          --template-file $TEMPLATE_FILE \
+          --stack-name $STACK_NAME \
+          --capabilities CAPABILITY_NAMED_IAM \
+          --no-fail-on-empty-changeset
 
   post_build:
     commands:
       - echo "Deployment complete!"
-      - >
+      - |
         aws cloudformation describe-stacks \
-        --stack-name $STACK_NAME \
-        --query "Stacks[0].StackStatus" \
-        --output text
+          --stack-name $STACK_NAME \
+          --query "Stacks[0].StackStatus" \
+          --output text
 
 artifacts:
   files:
