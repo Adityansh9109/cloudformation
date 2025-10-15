@@ -18,7 +18,7 @@ phases:
   build:
     commands:
       - echo "Deploying CloudFormation stack..."
-      - aws cloudformation deploy --template-file $TEMPLATE_FILE --stack-name $STACK_NAME --capabilities CAPABILITY_NAMED_IAM --debug
+      - aws cloudformation deploy --template-file $TEMPLATE_FILE --stack-name $STACK_NAME --capabilities CAPABILITY_NAMED_IAM --no-fail-on-empty-changeset --debug
 
   post_build:
     commands:
