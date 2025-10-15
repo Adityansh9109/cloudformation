@@ -7,7 +7,7 @@ Resources:
   ArtifactBucket:
     Type: AWS::S3::Bucket
 
-  # CodePipeline Role
+  # CodePipeline Role 
   PipelineRole:
     Type: AWS::IAM::Role
     Properties:
