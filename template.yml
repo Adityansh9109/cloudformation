@@ -1,7 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'CodePipeline + CodeBuild setup with proper IAM permissions'
+Description: 'CodePipeline + CodeBuild setup with GitHub token from Secrets Manager'
 
 Resources:
+
   # S3 Bucket for artifacts
   ArtifactBucket:
     Type: AWS::S3::Bucket
