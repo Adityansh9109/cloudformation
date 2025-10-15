@@ -4,23 +4,31 @@ env:
   variables:
     STACK_NAME: MyCodePipelineStack
     TEMPLATE_FILE: template.yml
+    SECRET_NAME: myapp/github-token  # Name of the secret in Secrets Manager
 
 phases:
   install:
     commands:
       - echo "Installing AWS CLI..."
-      - pip install --upgrade awscli
-  
+      - pip install --upgrade awscli jq
+
   pre_build:
     commands:
       - echo "Pre-build phase"
       - ls -la
-  
+      - echo "Fetching GitHub token from Secrets Manager..."
+      - export GITHUB_TOKEN=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --query SecretString --output text | jq -r .GITHUB_TOKEN)
+
   build:
     commands:
-      - echo "Deploying CloudFormation stack"
-      - aws cloudformation deploy --template-file template.yml --stack-name MyCodePipelineStack --capabilities CAPABILITY_NAMED_IAM --no-fail-on-empty-changeset
-  
+      - echo "Deploying CloudFormation stack..."
+      - aws cloudformation deploy \
+          --template-file $TEMPLATE_FILE \
+          --stack-name $STACK_NAME \
+          --capabilities CAPABILITY_NAMED_IAM \
+          --parameter-overrides GitHubToken=$GITHUB_TOKEN \
+          --no-fail-on-empty-changeset
+
   post_build:
     commands:
       - echo "Deployment complete!"
