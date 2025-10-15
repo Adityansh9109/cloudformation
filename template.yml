@@ -1,12 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'CodePipeline + CodeBuild setup with proper IAM permissions'
 
-Parameters:
-  GitHubToken:
-    Type: String
-    NoEcho: true
-    Description: "myapp/github-token"
-
 Resources:
   # S3 Bucket for artifacts
   ArtifactBucket:
@@ -58,6 +52,7 @@ Resources:
                   - ecr:*
                   - cloudformation:*
                   - iam:*
+                  - secretsmanager:GetSecretValue
                 Resource: '*'
 
   # CodeBuild Project
@@ -98,7 +93,7 @@ Resources:
                 Owner: Adityansh9109
                 Repo: AWS-Repo
                 Branch: main
-                OAuthToken: !Ref GitHubToken
+                OAuthToken: "{{resolve:secretsmanager:myapp/github-token:SecretString:GITHUB_TOKEN}}"
               OutputArtifacts:
                 - Name: SourceCode
         - Name: Build
