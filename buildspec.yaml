@@ -8,9 +8,7 @@ env:
 phases:
   install:
     commands:
-      - echo "Installing jq..."
-      - yum install -y jq   # AWS CLI v2 is already installed in CodeBuild image
-
+       - echo "Using built-in AWS CLI v2"
   pre_build:
     commands:
       - echo "Pre-build phase"
