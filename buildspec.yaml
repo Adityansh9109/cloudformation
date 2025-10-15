@@ -1,8 +1,8 @@
 version: 0.2
 env:
   variables:
-    STACK_NAME: MyCodePipelineStack
-    TEMPLATE_FILE: template.yml
+    APP_STACK_NAME: MyApplicationStack
+    APP_TEMPLATE_FILE: app-template.yml
 phases:
   install:
     commands:
@@ -12,19 +12,68 @@ phases:
     commands:
       - echo "Pre-build phase"
       - ls -la
-      - echo "Listing files in repository..."
+      - echo "Validating CloudFormation template..."
+      - aws cloudformation validate-template --template-body file://$APP_TEMPLATE_FILE
   build:
     commands:
-      - echo "Build phase - running application build/tests"
-      - echo "✓ Build completed successfully"
+      - echo "Deploying application stack..."
       - |
-        echo "NOTE: Infrastructure stack deployment should be done manually to avoid circular dependencies"
-        echo "Current infrastructure stack status:"
-        aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].{Name:StackName,Status:StackStatus}" --output table 2>/dev/null || echo "Stack not found"
+        STACK_STATUS=$(aws cloudformation describe-stacks --stack-name $APP_STACK_NAME --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+        echo "Current application stack status: $STACK_STATUS"
+        
+        # Clean up failed stacks
+        if [ "$STACK_STATUS" = "ROLLBACK_COMPLETE" ] || [ "$STACK_STATUS" = "CREATE_FAILED" ] || [ "$STACK_STATUS" = "DELETE_FAILED" ]; then
+          echo "Cleaning up failed stack..."
+          aws cloudformation delete-stack --stack-name $APP_STACK_NAME
+          aws cloudformation wait stack-delete-complete --stack-name $APP_STACK_NAME 2>/dev/null || true
+          STACK_STATUS="DOES_NOT_EXIST"
+        fi
+        
+        # Create or update stack
+        if [ "$STACK_STATUS" = "DOES_NOT_EXIST" ]; then
+          echo "Creating new application stack..."
+          aws cloudformation create-stack \
+            --stack-name $APP_STACK_NAME \
+            --template-body file://$APP_TEMPLATE_FILE \
+            --capabilities CAPABILITY_NAMED_IAM
+          
+          echo "Waiting for stack creation to complete..."
+          aws cloudformation wait stack-create-complete --stack-name $APP_STACK_NAME
+          echo "✓ Stack created successfully"
+        else
+          echo "Updating existing application stack..."
+          UPDATE_OUTPUT=$(aws cloudformation update-stack \
+            --stack-name $APP_STACK_NAME \
+            --template-body file://$APP_TEMPLATE_FILE \
+            --capabilities CAPABILITY_NAMED_IAM 2>&1 || echo "UPDATE_FAILED")
+          
+          if echo "$UPDATE_OUTPUT" | grep -q "No updates are to be performed"; then
+            echo "✓ No changes detected - stack is up to date"
+          elif echo "$UPDATE_OUTPUT" | grep -q "UPDATE_FAILED"; then
+            echo "✗ Update failed: $UPDATE_OUTPUT"
+            exit 1
+          else
+            echo "Waiting for stack update to complete..."
+            aws cloudformation wait stack-update-complete --stack-name $APP_STACK_NAME
+            echo "✓ Stack updated successfully"
+          fi
+        fi
   post_build:
     commands:
-      - echo "Post-build phase"
-      - echo "✓ Pipeline execution completed successfully"
+      - echo "Deployment complete!"
+      - |
+        echo "Application Stack Details:"
+        aws cloudformation describe-stacks \
+          --stack-name $APP_STACK_NAME \
+          --query "Stacks[0].{StackName:StackName,Status:StackStatus,Created:CreationTime}" \
+          --output table
+        
+        echo ""
+        echo "Stack Outputs:"
+        aws cloudformation describe-stacks \
+          --stack-name $APP_STACK_NAME \
+          --query "Stacks[0].Outputs" \
+          --output table || echo "No outputs defined"
 artifacts:
   files:
     - '**/*'
