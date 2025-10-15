@@ -4,7 +4,6 @@ env:
   variables:
     STACK_NAME: MyCodePipelineStack
     TEMPLATE_FILE: template.yml
-    SECRET_NAME: myapp/github-token
 
 phases:
   install:
@@ -15,25 +14,15 @@ phases:
     commands:
       - echo "Pre-build phase"
       - ls -la
-      # Fetch GitHub token from Secrets Manager
-      - |
-        export GITHUB_TOKEN=$(aws secretsmanager get-secret-value \
-          --secret-id $SECRET_NAME \
-          --query SecretString \
-          --output text \
-          | python3 -c "import sys, json; print(json.load(sys.stdin)['GITHUB_TOKEN'])")
-      - echo "GitHub token fetched successfully (hidden for security)"
 
   build:
     commands:
-      - echo "Deploying CloudFormation stack with debug..."
+      - echo "Deploying CloudFormation stack..."
       - |
         aws cloudformation deploy \
           --template-file $TEMPLATE_FILE \
           --stack-name $STACK_NAME \
           --capabilities CAPABILITY_NAMED_IAM \
-          --parameter-overrides GitHubToken=$GITHUB_TOKEN \
-          --no-fail-on-empty-changeset \
           --debug
 
   post_build:
