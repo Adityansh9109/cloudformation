@@ -3,7 +3,7 @@ version: 0.2
 env:
   variables:
     STACK_NAME: MyCodePipelineStack
-    TEMPLATE_FILE: template.yaml
+    TEMPLATE_FILE: template.yml
 
 phases:
   install:
