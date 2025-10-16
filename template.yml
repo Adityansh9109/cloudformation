@@ -92,7 +92,7 @@ Resources:
                 Version: 1
               Configuration:
                 Owner: Adityansh9109
-                Repo: AWS-Repo
+                Repo: codebuildgit
                 Branch: main
                 OAuthToken: "{{resolve:secretsmanager:myapp/github-token:SecretString:GITHUB_TOKEN}}"
               OutputArtifacts:
