@@ -60,7 +60,7 @@ Resources:
   BuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: my-build-project16-10
+      Name: my-build-project16-10-final
       ServiceRole: !GetAtt BuildRole.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -76,7 +76,7 @@ Resources:
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      Name: my-pipeline16-10
+      Name: my-pipeline16-10-final
       RoleArn: !GetAtt PipelineRole.Arn
       ArtifactStore:
         Type: S3
@@ -106,7 +106,7 @@ Resources:
                 Provider: CodeBuild
                 Version: 1
               Configuration:
-                ProjectName: my-build-project16-10
+                ProjectName: my-build-project16-10-final
               InputArtifacts:
                 - Name: SourceCode
               OutputArtifacts:
